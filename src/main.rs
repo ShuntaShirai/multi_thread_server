@@ -1,4 +1,5 @@
 use multi_thread_server::ThreadPool;
+
 use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -7,16 +8,19 @@ use std::time::Duration;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
-
     let pool = ThreadPool::new(4);
 
-    for stream in listener.incoming() {
+    // スレッドを片付けてサーバーが正常に終了できることをシュミレートするためにあえて２つのリクエストしか受け付けない
+    for stream in listener.incoming().take(2) {
         let stream = stream.unwrap();
 
         pool.execute(|| {
             handle_connection(stream);
         });
     }
+
+    // 閉じます
+    println!("Shutting down.");
 }
 
 fn handle_connection(mut stream: TcpStream) {
